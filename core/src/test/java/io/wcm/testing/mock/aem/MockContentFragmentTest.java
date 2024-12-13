@@ -32,6 +32,7 @@ import com.adobe.cq.dam.cfm.ContentFragment;
 import com.adobe.cq.dam.cfm.ContentVariation;
 import com.adobe.cq.dam.cfm.VariationTemplate;
 import com.day.cq.dam.api.DamConstants;
+import com.day.cq.tagging.Tag;
 
 import io.wcm.testing.mock.aem.context.TestAemContext;
 import io.wcm.testing.mock.aem.junit.AemContext;
@@ -44,14 +45,16 @@ public class MockContentFragmentTest {
   @Test
   @SuppressWarnings("null")
   public void testContentFragmentStructure() throws Exception {
-    String assetPath = context.uniqueRoot().dam() + "/cfStructure";
-    ContentFragment cf = context.create().contentFragmentStructured(assetPath,
+    final String assetPath = context.uniqueRoot().dam() + "/cfStructure";
+    final Tag testTag1 = context.create().tag("TestTag1");
+    final ContentFragment cf = context.create().contentFragmentStructured(assetPath,
         "param1", "value1", "param2", 123, "param3", true, "param4", new String[] { "v1", "v2" });
     assertNotNull(cf);
 
     cf.setTitle("myTitle");
     cf.setDescription("myDesc");
     cf.setMetaData("meta1", "value1");
+    cf.setTags(new Tag[] {testTag1});
 
     assertEquals("cfStructure", cf.getName());
     assertEquals("myTitle", cf.getTitle());
@@ -67,7 +70,7 @@ public class MockContentFragmentTest {
     assertEquals("v1\nv2", cf.getElement("param4").getContent());
 
     // update data
-    ContentElement param1 = cf.getElement("param1");
+    final ContentElement param1 = cf.getElement("param1");
     param1.setContent("new_value", null);
     assertEquals("new_value", param1.getContent());
 
@@ -94,13 +97,18 @@ public class MockContentFragmentTest {
     assertEquals("v2", variation.getName());
     assertEquals("v2", variation.getTitle());
     assertEquals("", variation.getDescription());
+
+    // test tagging
+    assertNotNull(cf.getTags());
+    assertEquals(1, cf.getTags().length);
+    assertEquals(testTag1.getTagID(), cf.getTags()[0].getTagID());
   }
 
   @Test
   @SuppressWarnings("null")
   public void testContentFragmentText() throws Exception {
-    String assetPath = context.uniqueRoot().dam() + "/cfText";
-    ContentFragment cf = context.create().contentFragmentText(assetPath,
+    final String assetPath = context.uniqueRoot().dam() + "/cfText";
+    final ContentFragment cf = context.create().contentFragmentText(assetPath,
         "<p>Text</p>", "text/html");
     assertNotNull(cf);
 
@@ -118,16 +126,16 @@ public class MockContentFragmentTest {
     assertTrue(cf.hasElement("main"));
 
     //getElement with null param should act as if "main" param was passed
-    ContentElement contentElementEmptyParam = cf.getElement("");
+    final ContentElement contentElementEmptyParam = cf.getElement("");
     assertEquals("<p>Text</p>", contentElementEmptyParam.getContent());
     assertEquals("text/html", contentElementEmptyParam.getContentType());
 
     //getElement with null param should act as if "main" param was passed
-    ContentElement contentElementNullParam = cf.getElement(null);
+    final ContentElement contentElementNullParam = cf.getElement(null);
     assertEquals("<p>Text</p>", contentElementNullParam.getContent());
     assertEquals("text/html", contentElementNullParam.getContentType());
 
-    ContentElement contentElement = cf.getElement("main");
+    final ContentElement contentElement = cf.getElement("main");
     assertEquals("<p>Text</p>", contentElement.getContent());
     assertEquals("text/html", contentElement.getContentType());
 
@@ -137,7 +145,7 @@ public class MockContentFragmentTest {
     assertEquals("text/plain", contentElement.getContentType());
 
     // create variation
-    VariationTemplate varTemplate = cf.createVariation("v1", "V1", "desc1");
+    final VariationTemplate varTemplate = cf.createVariation("v1", "V1", "desc1");
     ContentVariation variation = contentElement.createVariation(varTemplate);
     assertEquals("v1", variation.getName());
     assertEquals("V1", variation.getTitle());
