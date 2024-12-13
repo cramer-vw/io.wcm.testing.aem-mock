@@ -41,6 +41,8 @@ import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.service.component.annotations.Component;
 
 import com.adobe.cq.dam.cfm.ContentFragment;
+import com.adobe.cq.dam.cfm.ElementTemplate;
+import com.adobe.cq.dam.cfm.FragmentTemplate;
 import com.day.cq.commons.jcr.JcrConstants;
 import com.day.cq.dam.commons.util.DamUtil;
 import com.day.cq.tagging.Tag;
@@ -69,6 +71,8 @@ import com.day.cq.wcm.api.policies.ContentPolicyMapping;
         AdapterFactory.ADAPTER_CLASSES + "=com.day.cq.tagging.Tag",
         AdapterFactory.ADAPTER_CLASSES + "=com.day.cq.wcm.api.designer.Designer",
         AdapterFactory.ADAPTER_CLASSES + "=com.adobe.cq.dam.cfm.ContentFragment",
+        AdapterFactory.ADAPTER_CLASSES + "=com.adobe.cq.dam.cfm.ElementTemplate",
+        AdapterFactory.ADAPTER_CLASSES + "=com.adobe.cq.dam.cfm.FragmentTemplate",
         AdapterFactory.ADAPTER_CLASSES + "=com.day.cq.wcm.api.policies.ContentPolicy",
         AdapterFactory.ADAPTER_CLASSES + "=com.day.cq.wcm.api.policies.ContentPolicyMapping",
         AdapterFactory.ADAPTER_CLASSES + "=com.day.cq.wcm.api.policies.ContentPolicyManager"
@@ -104,6 +108,12 @@ public final class MockAemAdapterFactory implements AdapterFactory {
     if (type == ContentPolicy.class && resource.isResourceType(RT_CONTENTPOLICY)) {
       return (AdapterType)new MockContentPolicy(resource);
     }
+    if (type == FragmentTemplate.class) {
+       return (AdapterType) new MockFragmentTemplate(resource);
+    }
+    if (type == ElementTemplate.class) {
+       return (AdapterType) new MockElementTemplate(resource);
+    }
     if (type == ContentPolicyMapping.class
         && (resource.isResourceType(RT_CONTENT_POLICY_MAPPING) || resource.isResourceType(RT_CONTENT_POLICY_MAPPINGS))
         && resource.getValueMap().containsKey(PN_POLICY)) {
@@ -133,21 +143,19 @@ public final class MockAemAdapterFactory implements AdapterFactory {
   }
 
   private boolean isPrimaryType(@NotNull final Resource resource, @NotNull final String primaryType) {
-    Node node = resource.adaptTo(Node.class);
-    if (node != null) {
-      // JCR-based resource resolver
-      try {
-        return StringUtils.equals(node.getPrimaryNodeType().getName(), primaryType);
-      }
-      catch (RepositoryException ex) {
-        // ignore
-        return false;
-      }
-    }
-    else {
+    final Node node = resource.adaptTo(Node.class);
+    if (node == null) {
       // sling resource resolver mock
-      ValueMap props = resource.getValueMap();
+      final ValueMap props = resource.getValueMap();
       return StringUtils.equals(props.get(JcrConstants.JCR_PRIMARYTYPE, String.class), primaryType);
+    }
+    // JCR-based resource resolver
+    try {
+      return StringUtils.equals(node.getPrimaryNodeType().getName(), primaryType);
+    }
+    catch (final RepositoryException ex) {
+      // ignore
+      return false;
     }
   }
 
